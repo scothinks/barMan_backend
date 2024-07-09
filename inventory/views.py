@@ -52,31 +52,54 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
 
     @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
     def list(self, request, *args, **kwargs):
-       try:
-        logger.info(f"Listing inventory items for user: {request.user}")
-        response = super().list(request, *args, **kwargs)
-        logger.debug(f"Response data: {response.data}")
-        return response
-       except Exception as e:
-        logger.error(f"Error in list method: {str(e)}", exc_info=True)
-        return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        try:
+            logger.info(f"Listing inventory items for user: {request.user}")
+            response = super().list(request, *args, **kwargs)
+            logger.debug(f"Response data: {response.data}")
+            return response
+        except Exception as e:
+            logger.error(f"Error in list method: {str(e)}", exc_info=True)
+            return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def retrieve(self, request, *args, **kwargs):
-        logger.info(f"Retrieving single inventory item for user: {request.user}")
-        response = super().retrieve(request, *args, **kwargs)
-        logger.debug(f"Response data: {response.data}")
-        return response
+        try:
+            logger.info(f"Retrieving single inventory item for user: {request.user}")
+            response = super().retrieve(request, *args, **kwargs)
+            logger.debug(f"Response data: {response.data}")
+            return response
+        except Exception as e:
+            logger.error(f"Error in retrieve method: {str(e)}", exc_info=True)
+            return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def create(self, request, *args, **kwargs):
-        logger.info(f"Creating new inventory item for user: {request.user}")
-        logger.debug(f"Request data: {request.data}")
-        return super().create(request, *args, **kwargs)
+        try:
+            logger.info(f"Creating new inventory item for user: {request.user}")
+            logger.debug(f"Request data: {request.data}")
+            serializer = self.get_serializer(data=request.data)
+            if serializer.is_valid():
+                self.perform_create(serializer)
+                headers = self.get_success_headers(serializer.data)
+                logger.info(f"Successfully created inventory item: {serializer.data}")
+                return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+            logger.warning(f"Invalid data for creating inventory item: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error in create method: {str(e)}", exc_info=True)
+            return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def update(self, request, *args, **kwargs):
-        logger.info(f"Updating inventory item for user: {request.user}")
-        logger.debug(f"Request data: {request.data}")
-        return super().update(request, *args, **kwargs)
+        try:
+            logger.info(f"Updating inventory item for user: {request.user}")
+            logger.debug(f"Request data: {request.data}")
+            return super().update(request, *args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error in update method: {str(e)}", exc_info=True)
+            return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def destroy(self, request, *args, **kwargs):
-        logger.info(f"Deleting inventory item for user: {request.user}")
-        return super().destroy(request, *args, **kwargs)
+        try:
+            logger.info(f"Deleting inventory item for user: {request.user}")
+            return super().destroy(request, *args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error in destroy method: {str(e)}", exc_info=True)
+            return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

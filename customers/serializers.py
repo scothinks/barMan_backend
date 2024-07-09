@@ -11,4 +11,5 @@ class CustomerTabSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomerTab
-        fields = ['id', 'customer', 'customer_name', 'sale', 'amount']
+        fields = ['id', 'customer', 'amount', 'customer_name']
+        read_only_fields = ['amount']
