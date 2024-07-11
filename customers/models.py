@@ -18,14 +18,6 @@ class CustomerTab(models.Model):
         return f"{self.customer.name} - ₦{self.amount}"
 
     @classmethod
-    def get_or_create_tab(cls, customer):
-        tab, created = cls.objects.get_or_create(
-            customer=customer,
-            defaults={'amount': 0}
-        )
-        return tab
-
-    @classmethod
     def update_tab_amount(cls, customer):
         from sales.models import Sale  # Import here to avoid circular import
         total_pending = Sale.objects.filter(
@@ -36,4 +28,6 @@ class CustomerTab(models.Model):
         tab, created = cls.objects.get_or_create(customer=customer)
         tab.amount = total_pending
         tab.save()
-        return tab
+
+        # Remove any extra tabs for this customer
+        cls.objects.filter(customer=customer).exclude(pk=tab.pk).delete()

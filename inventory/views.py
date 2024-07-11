@@ -12,6 +12,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +35,19 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
     ordering_fields = ['name', 'cost', 'quantity']
 
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+        logger.info(f"Getting permissions for action: {self.action}")
+        logger.info(f"User: {self.request.user}, Authenticated: {self.request.user.is_authenticated}")
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'update_quantity']:
+            logger.info("Applying CanUpdateInventory permission")
             return [CanUpdateInventory()]
+        logger.info("Applying IsAuthenticated permission")
         return [permissions.IsAuthenticated()]
+
+    def initial(self, request, *args, **kwargs):
+        logger.info(f"Initial method called for action: {self.action}")
+        logger.info(f"User: {request.user}, Authenticated: {request.user.is_authenticated}")
+        logger.info(f"Request headers: {request.headers}")
+        super().initial(request, *args, **kwargs)
 
     @action(detail=True, methods=['patch'])
     def update_quantity(self, request, pk=None):
@@ -46,7 +57,7 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
             serializer.save()
             if item.quantity <= item.low_inventory_threshold:
                 # Send notification logic here
-                print(f"Low inventory alert for item: {item.name}")
+                logger.warning(f"Low inventory alert for item: {item.name}")
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -54,6 +65,7 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         try:
             logger.info(f"Listing inventory items for user: {request.user}")
+            logger.info(f"User permissions: {request.user.get_all_permissions()}")
             response = super().list(request, *args, **kwargs)
             logger.debug(f"Response data: {response.data}")
             return response
@@ -103,3 +115,12 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.error(f"Error in destroy method: {str(e)}", exc_info=True)
             return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def handle_exception(self, exc):
+        if isinstance(exc, AuthenticationFailed):
+            logger.error(f"Authentication failed for user: {self.request.user}")
+            return Response({"error": "Authentication failed"}, status=status.HTTP_401_UNAUTHORIZED)
+        elif isinstance(exc, PermissionDenied):
+            logger.error(f"Permission denied for user: {self.request.user}")
+            return Response({"error": "You don't have permission to perform this action"}, status=status.HTTP_403_FORBIDDEN)
+        return super().handle_exception(exc)

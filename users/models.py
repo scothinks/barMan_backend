@@ -20,3 +20,18 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.username
+
+    def has_inventory_permission(self):
+        return self.is_superuser or self.can_update_inventory
+
+    def has_sales_permission(self):
+        return self.is_superuser or self.can_report_sales
+
+    def has_customer_permission(self):
+        return self.is_superuser or self.can_create_customers
+
+    def has_tab_permission(self):
+        return self.is_superuser or (self.can_create_tabs and self.can_update_tabs)
+
+    def has_user_management_permission(self):
+        return self.is_superuser or self.can_manage_users
