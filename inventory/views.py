@@ -24,7 +24,7 @@ class StandardResultsSetPagination(PageNumberPagination):
 class InventoryItemViewSet(viewsets.ModelViewSet):
     throttle_classes = [UserRateThrottle]
     throttle_scope = 'inventory'
-    queryset = InventoryItem.objects.all()
+    queryset = InventoryItem.objects.all().order_by('id')
     serializer_class = InventoryItemSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
@@ -124,3 +124,12 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
             logger.error(f"Permission denied for user: {self.request.user}")
             return Response({"error": "You don't have permission to perform this action"}, status=status.HTTP_403_FORBIDDEN)
         return super().handle_exception(exc)
+    
+    def list(self, request, *args, **kwargs):
+        logger.info(f"Listing inventory items for user: {request.user}")
+        
+        # Log large payloads
+        if len(request.body) > 1000:
+            logger.warning(f"Large payload detected: {len(request.body)} bytes")
+
+        return super().list(request, *args, **kwargs)

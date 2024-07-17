@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import logging
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -7,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-v-as636%&9+kx4_68!h4wh-2s4-doy4zfvrq@(^+qs&zl!jy0g')
 
 # Use environment variable for DEBUG in production
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
 # Use environment variable for ALLOWED_HOSTS in production
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
@@ -36,14 +37,15 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # Make sure this is before CommonMiddleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'barMan_backend.middleware.LargeHeadersLoggingMiddleware',
 ]
 
 
@@ -107,6 +109,10 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
@@ -119,15 +125,16 @@ REST_FRAMEWORK = {
         'user': '1000/minute'
     },
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'MAX_UPLOAD_SIZE': 5242880,  # 5 MB
 }
 
 # Custom user model
 AUTH_USER_MODEL = 'users.CustomUser'
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only allow all origins in debug mode
-CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',')
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = "http://localhost:3000",
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only in debug mode
 
 CORS_ALLOW_METHODS = [
     'DELETE',
@@ -151,27 +158,61 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # CSRF settings
-CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+CSRF_COOKIE_NAME = "csrftoken"
+CSRF_HEADER_NAME = "X-CSRFToken"
+CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript access
 CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_HTTPONLY = False  # False if you need to access it from JavaScript
 CSRF_USE_SESSIONS = False
-CSRF_COOKIE_SECURE = not DEBUG  # Use secure cookie in production
+CSRF_COOKIE_SECURE = not DEBUG
 
 # Session settings
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 1209600  # 2 weeks, in seconds
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = not DEBUG  # Use secure cookie in production
+SESSION_SAVE_EVERY_REQUEST = True
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'filters': {
+        'duplicate_filter': {
+            '()': 'barMan_backend.log_filters.DuplicateFilter',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
     'handlers': {
         'console': {
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+            'filters': ['duplicate_filter', 'require_debug_true'],
         },
         'file': {
+            'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': 'django.log', 
+            'filename': 'django.log',
+            'formatter': 'verbose',
+            'filters': ['duplicate_filter'],
+        },
+        'auth_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'auth.log',
+            'formatter': 'verbose',
         },
     },
     'root': {
@@ -185,19 +226,38 @@ LOGGING = {
             'propagate': False,
         },
         'django.db.backends': {
-            'level': 'INFO',  # Change to 'DEBUG' to log all SQL queries
+            'level': 'INFO',
             'handlers': ['console'],
             'propagate': False,
         },
-        'inventory': {
+        'django.request': {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False,
         },
-        'users': {
+        'rest_framework': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'users': {  # Add this logger for your users app
+            'handlers': ['console', 'auth_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'barMan_backend': {  # Add this logger for your main app
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False,
         },
     },
 }
+
+# Increase the maximum size of the entire request body
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
+
+# Increase the maximum number of fields allowed in a request
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
+
+# Increase the maximum allowed size for an individual field
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
