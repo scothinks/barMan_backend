@@ -8,5 +8,6 @@ router.register(r'', SaleViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('search/', SaleViewSet.as_view({'get': 'search'}), name='sale-search'),
     path('docs/', include_docs_urls(title='Sales API')),
 ]

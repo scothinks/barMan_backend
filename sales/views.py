@@ -8,10 +8,12 @@ from customers.models import Customer, CustomerTab
 from .permissions import IsSuperAdmin
 from django.db import transaction
 from inventory.models import InventoryItem
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from rest_framework.pagination import PageNumberPagination
 from django.utils.dateparse import parse_date
 from django_filters.rest_framework import DjangoFilterBackend
+from django.utils import timezone
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +99,6 @@ class SaleViewSet(viewsets.ModelViewSet):
         logger.info("Fetching sales list")
         queryset = self.filter_queryset(self.get_queryset())
         
-        # Add date filtering
         start_date = self.request.query_params.get('start_date', None)
         end_date = self.request.query_params.get('end_date', None)
         if start_date:
@@ -122,7 +123,6 @@ class SaleViewSet(viewsets.ModelViewSet):
                 'previous': None,
             }
 
-        # Calculate summary
         total_done = queryset.filter(payment_status='DONE').aggregate(
             total=Sum('total_amount'))['total'] or 0
         total_pending = queryset.filter(payment_status='PENDING').aggregate(
@@ -140,3 +140,68 @@ class SaleViewSet(viewsets.ModelViewSet):
         }
         logger.info(f"Returning sales data: {response_data}")
         return Response(response_data)
+
+    @action(detail=False, methods=['GET'])
+    def search(self, request):
+        logger.info("Performing sales search")
+        queryset = self.get_queryset()
+        
+        customer_name = request.query_params.get('customer')
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        period = request.query_params.get('period')
+
+        logger.info(f"Filters received: customer={customer_name}, start_date={start_date}, end_date={end_date}, period={period}")
+
+        if customer_name:
+            queryset = queryset.filter(Q(customer__name__icontains=customer_name) | Q(item__name__icontains=customer_name))
+
+        if period:
+            end_date = timezone.now()
+            if period == 'day' or period == 'last 24 hours':
+                start_date = end_date - timedelta(days=1)
+            elif period == 'week':
+                start_date = end_date - timedelta(days=7)
+            elif period == 'month':
+                start_date = end_date - timedelta(days=30)
+            elif period == 'year':
+                start_date = end_date - timedelta(days=365)
+            elif period == 'all':
+                start_date = None
+            else:
+                return Response({"error": "Invalid period"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if start_date:
+                queryset = queryset.filter(timestamp__range=[start_date, end_date])
+        elif start_date or end_date:
+            if start_date:
+                start_date = parse_date(start_date)
+                if start_date:
+                    queryset = queryset.filter(timestamp__date__gte=start_date)
+            if end_date:
+                end_date = parse_date(end_date)
+                if end_date:
+                    queryset = queryset.filter(timestamp__date__lte=end_date)
+
+        logger.info(f"Filtered queryset: {queryset.query}")
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            result = self.get_paginated_response(serializer.data)
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+            result = Response(serializer.data)
+
+        total_done = queryset.filter(payment_status='DONE').aggregate(
+            total=Sum('total_amount'))['total'] or 0
+        total_pending = queryset.filter(payment_status='PENDING').aggregate(
+            total=Sum('total_amount'))['total'] or 0
+
+        result.data['summary'] = {
+            'total_done': float(total_done),
+            'total_pending': float(total_pending)
+        }
+
+        logger.info(f"Returning search results: {result.data}")
+        return result
