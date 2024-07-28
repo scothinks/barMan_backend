@@ -37355,3 +37355,40 @@ INFO 2024-07-28 03:19:23,773 views 87997 6131445760 Token created: False
 DEBUG 2024-07-28 03:19:23,773 views 87997 6131445760 Response data: {'token': '21d7f5084028a1ee80551e0f2b75b0dcd4e3f6d6', 'user_id': 1, 'email': 'scot@finderverse.com', 'username': 'scothinks', 'can_update_inventory': True, 'can_report_sales': True, 'can_create_customers': True, 'can_create_tabs': True, 'can_update_tabs': True, 'can_manage_users': False}
 INFO 2024-07-28 03:19:23,805 views 87997 6131445760 Fetching current user data for user: scothinks
 INFO 2024-07-28 03:19:23,805 views 87997 6131445760 Successfully serialized user data for: scothinks
+INFO 2024-07-28 03:24:43,219 views 87997 6131445760 Fetching current user data for user: scothinks
+INFO 2024-07-28 03:24:43,226 views 87997 6131445760 Successfully serialized user data for: scothinks
+INFO 2024-07-28 09:35:11,271 views 87997 6131445760 Fetching current user data for user: scothinks
+INFO 2024-07-28 09:35:11,278 views 87997 6131445760 Successfully serialized user data for: scothinks
+INFO 2024-07-28 09:43:12,765 views 87997 6131445760 Fetching current user data for user: scothinks
+INFO 2024-07-28 09:43:12,768 views 87997 6131445760 Successfully serialized user data for: scothinks
+INFO 2024-07-28 09:45:43,787 views 87997 6131445760 Fetching current user data for user: scothinks
+INFO 2024-07-28 09:45:43,788 views 87997 6131445760 Successfully serialized user data for: scothinks
+INFO 2024-07-28 09:45:47,831 views 87997 6131445760 Fetching current user data for user: scothinks
+INFO 2024-07-28 09:45:47,832 views 87997 6131445760 Successfully serialized user data for: scothinks
+INFO 2024-07-28 09:47:34,373 views 87997 6131445760 Fetching current user data for user: scothinks
+INFO 2024-07-28 09:47:34,373 views 87997 6131445760 Successfully serialized user data for: scothinks
+INFO 2024-07-28 09:47:41,323 views 87997 6131445760 Fetching current user data for user: scothinks
+INFO 2024-07-28 09:47:41,325 views 87997 6131445760 Successfully serialized user data for: scothinks
+INFO 2024-07-28 09:57:47,144 views 87997 6131445760 Fetching current user data for user: scothinks
+INFO 2024-07-28 09:57:47,148 views 87997 6131445760 Successfully serialized user data for: scothinks
+INFO 2024-07-28 09:59:31,227 views 87997 6131445760 Fetching current user data for user: scothinks
+INFO 2024-07-28 09:59:31,228 views 87997 6131445760 Successfully serialized user data for: scothinks
+INFO 2024-07-28 10:01:55,339 views 87997 6131445760 Fetching current user data for user: scothinks
+INFO 2024-07-28 10:01:55,364 views 87997 6131445760 Successfully serialized user data for: scothinks
+INFO 2024-07-28 10:27:36,993 views 90681 6167752704 Attempting authentication for user: scothinks
+DEBUG 2024-07-28 10:27:36,993 views 90681 6167752704 Request data: {'username': 'scothinks', 'password': 's34135th'}
+INFO 2024-07-28 10:27:37,183 views 90681 6167752704 Authentication successful for user: scothinks
+INFO 2024-07-28 10:27:37,183 views 90681 6167752704 Token created: False
+DEBUG 2024-07-28 10:27:37,183 views 90681 6167752704 Response data: {'token': '21d7f5084028a1ee80551e0f2b75b0dcd4e3f6d6', 'user_id': 1, 'email': 'scot@finderverse.com', 'username': 'scothinks', 'can_update_inventory': True, 'can_report_sales': True, 'can_create_customers': True, 'can_create_tabs': True, 'can_update_tabs': True, 'can_manage_users': False}
+INFO 2024-07-28 10:27:37,226 views 90681 6167752704 Fetching current user data for user: scothinks
+INFO 2024-07-28 10:27:37,226 views 90681 6167752704 Successfully serialized user data for: scothinks
+INFO 2024-07-28 10:37:17,403 views 90681 6167752704 Fetching current user data for user: scothinks
+INFO 2024-07-28 10:37:17,404 views 90681 6167752704 Successfully serialized user data for: scothinks
+INFO 2024-07-28 10:43:29,779 views 90681 6167752704 Fetching current user data for user: scothinks
+INFO 2024-07-28 10:43:29,784 views 90681 6167752704 Successfully serialized user data for: scothinks
+INFO 2024-07-28 10:44:33,872 views 90681 6167752704 Fetching current user data for user: scothinks
+INFO 2024-07-28 10:44:33,874 views 90681 6167752704 Successfully serialized user data for: scothinks
+INFO 2024-07-28 10:54:46,868 views 91278 6145470464 Fetching current user data for user: scothinks
+INFO 2024-07-28 10:54:46,874 views 91278 6145470464 Successfully serialized user data for: scothinks
+INFO 2024-07-28 10:57:11,945 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 10:57:11,947 views 91278 6128644096 Successfully serialized user data for: scothinks

@@ -8,9 +8,9 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 class CustomerTabSerializer(serializers.ModelSerializer):
     customer_name = serializers.CharField(source='customer.name', read_only=True)
+    customer_id = serializers.IntegerField(source='customer.id', read_only=True)
     tab_limit = serializers.DecimalField(source='customer.tab_limit', max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = CustomerTab
-        fields = ['id', 'customer', 'amount', 'customer_name', 'tab_limit']
-        read_only_fields = ['amount']
+        fields = ['id', 'customer', 'customer_id', 'customer_name', 'amount', 'tab_limit']

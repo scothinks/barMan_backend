@@ -80,6 +80,21 @@ class SaleViewSet(viewsets.ModelViewSet):
         
         return Response({'status': 'sale allocated to customer'})
     
+    @action(detail=False, methods=['post'])
+    def multiple(self, request):
+        sales_data = request.data
+        created_sales = []
+
+        for sale_data in sales_data:
+            serializer = self.get_serializer(data=sale_data)
+            if serializer.is_valid():
+                sale = serializer.save(recorded_by=request.user)
+                created_sales.append(self.get_serializer(sale).data)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(created_sales, status=status.HTTP_201_CREATED)
+    
     def create(self, request, *args, **kwargs):
         logger.info(f"Received sale data: {request.data}")
         serializer = self.get_serializer(data=request.data)

@@ -48,8 +48,10 @@ class CustomerViewSet(viewsets.ModelViewSet):
         return super().update(request, *args, **kwargs)
     
     def partial_update(self, request, *args, **kwargs):
-        kwargs['partial'] = True
-        return self.update(request, *args, **kwargs)
+        logger.info(f"Partial updating customer with ID: {kwargs.get('pk')}, data: {request.data}")
+        response = super().partial_update(request, *args, **kwargs)
+        logger.info(f"Updated customer data: {response.data}")
+        return response
 
     def destroy(self, request, *args, **kwargs):
         logger.info(f"Deleting customer with ID: {kwargs.get('pk')}")
@@ -104,7 +106,6 @@ class CustomerTabViewSet(viewsets.ModelViewSet):
         self.perform_update(serializer)
         return Response(serializer.data)
 
-
     def destroy(self, request, *args, **kwargs):
         logger.info(f"Deleting customer tab with ID: {kwargs.get('pk')}")
         return super().destroy(request, *args, **kwargs)
@@ -149,4 +150,3 @@ class BatchCustomerOperations(APIView):
         permission_classes = [permissions.IsAuthenticated]
         logger.info(f"Batch operation permissions: {[p.__name__ for p in permission_classes]}")
         return [permission() for permission in permission_classes]
-        pass
