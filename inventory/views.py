@@ -13,6 +13,8 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
+from django.utils import timezone
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +26,7 @@ class StandardResultsSetPagination(PageNumberPagination):
 class InventoryItemViewSet(viewsets.ModelViewSet):
     throttle_classes = [UserRateThrottle]
     throttle_scope = 'inventory'
-    queryset = InventoryItem.objects.all().order_by('id')
+    queryset = InventoryItem.objects.filter(is_deleted=False).order_by('id')
     serializer_class = InventoryItemSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
@@ -37,7 +39,7 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         logger.info(f"Getting permissions for action: {self.action}")
         logger.info(f"User: {self.request.user}, Authenticated: {self.request.user.is_authenticated}")
-        if self.action in ['create', 'update', 'partial_update', 'destroy', 'update_quantity']:
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'update_quantity', 'soft_delete', 'confirm_delete', 'restore']:
             logger.info("Applying CanUpdateInventory permission")
             return [CanUpdateInventory()]
         logger.info("Applying IsAuthenticated permission")
@@ -110,11 +112,51 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         try:
-            logger.info(f"Deleting inventory item for user: {request.user}")
-            return super().destroy(request, *args, **kwargs)
+            logger.info(f"Soft deleting inventory item for user: {request.user}")
+            return self.soft_delete(request, pk=kwargs.get('pk'))
         except Exception as e:
             logger.error(f"Error in destroy method: {str(e)}", exc_info=True)
             return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'])
+    def confirm_delete(self, request, pk=None):
+        try:
+            item = self.get_object()
+            if item.is_deleted and item.delete_requested_at:
+                grace_period = timezone.now() - timedelta(days=30)  # 30-day grace period
+                if item.delete_requested_at <= grace_period:
+                    item.delete()
+                    logger.info(f"Permanently deleted inventory item: {item.name}")
+                    return Response({"status": "Item permanently deleted"}, status=status.HTTP_204_NO_CONTENT)
+                else:
+                    logger.info(f"Attempted to delete item {item.name} before grace period")
+                    return Response({"error": "Grace period not over"}, status=status.HTTP_400_BAD_REQUEST)
+            logger.info(f"Attempted to confirm delete for item not marked for deletion: {item.name}")
+            return Response({"error": "Item not marked for deletion"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error in confirm_delete method: {str(e)}", exc_info=True)
+            return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        try:
+            item = self.get_object()
+            if item.is_deleted:
+                item.restore()
+                logger.info(f"Restored inventory item: {item.name}")
+                return Response({"status": "Item restored"}, status=status.HTTP_200_OK)
+            logger.info(f"Attempted to restore non-deleted item: {item.name}")
+            return Response({"error": "Item not deleted"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error in restore method: {str(e)}", exc_info=True)
+            return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        include_deleted = self.request.query_params.get('include_deleted', 'false').lower() == 'true'
+        if include_deleted:
+            queryset = InventoryItem.objects.all()
+        return queryset
 
     def handle_exception(self, exc):
         if isinstance(exc, AuthenticationFailed):
@@ -124,7 +166,7 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
             logger.error(f"Permission denied for user: {self.request.user}")
             return Response({"error": "You don't have permission to perform this action"}, status=status.HTTP_403_FORBIDDEN)
         return super().handle_exception(exc)
-    
+
     def list(self, request, *args, **kwargs):
         logger.info(f"Listing inventory items for user: {request.user}")
         
@@ -133,3 +175,17 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
             logger.warning(f"Large payload detected: {len(request.body)} bytes")
 
         return super().list(request, *args, **kwargs)
+    
+    @action(detail=True, methods=['post'])
+    def soft_delete(self, request, pk=None):
+        try:
+            item = self.get_object()
+            if not item.is_deleted:
+                item.soft_delete()
+                logger.info(f"Soft deleted inventory item: {item.name}")
+                return Response({"status": "Item marked for deletion"}, status=status.HTTP_200_OK)
+            logger.info(f"Attempted to soft delete already deleted item: {item.name}")
+            return Response({"error": "Item already deleted"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error in soft_delete method: {str(e)}", exc_info=True)
+            return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

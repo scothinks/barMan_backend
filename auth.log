@@ -37392,3 +37392,94 @@ INFO 2024-07-28 10:54:46,868 views 91278 6145470464 Fetching current user data f
 INFO 2024-07-28 10:54:46,874 views 91278 6145470464 Successfully serialized user data for: scothinks
 INFO 2024-07-28 10:57:11,945 views 91278 6128644096 Fetching current user data for user: scothinks
 INFO 2024-07-28 10:57:11,947 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 11:48:29,898 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 11:48:29,901 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 11:48:43,726 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 11:48:43,726 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 11:50:55,211 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 11:50:55,215 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 11:56:52,308 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 11:56:52,312 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 12:02:05,618 views 91278 6145470464 Fetching current user data for user: scothinks
+INFO 2024-07-28 12:02:05,621 views 91278 6145470464 Successfully serialized user data for: scothinks
+INFO 2024-07-28 12:08:56,946 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 12:08:56,948 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 12:27:31,195 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 12:27:31,197 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 12:34:45,702 views 91278 6128644096 Attempting authentication for user: scothinks
+DEBUG 2024-07-28 12:34:45,704 views 91278 6128644096 Request data: {'username': 'scothinks', 'password': 's34135th'}
+INFO 2024-07-28 12:34:45,901 views 91278 6128644096 Authentication successful for user: scothinks
+INFO 2024-07-28 12:34:45,901 views 91278 6128644096 Token created: False
+DEBUG 2024-07-28 12:34:45,901 views 91278 6128644096 Response data: {'token': '21d7f5084028a1ee80551e0f2b75b0dcd4e3f6d6', 'user_id': 1, 'email': 'scot@finderverse.com', 'username': 'scothinks', 'can_update_inventory': True, 'can_report_sales': True, 'can_create_customers': True, 'can_create_tabs': True, 'can_update_tabs': True, 'can_manage_users': False}
+INFO 2024-07-28 12:34:45,944 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 12:34:45,944 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 12:36:17,465 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 12:36:17,466 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 12:41:23,111 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 12:41:23,113 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 12:52:09,908 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 12:52:09,913 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 14:06:54,918 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 14:06:54,922 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 14:09:02,224 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 14:09:02,225 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 14:11:09,326 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 14:11:09,328 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 14:13:20,431 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 14:13:20,432 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 14:15:48,412 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 14:15:48,413 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 14:18:29,642 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 14:18:29,643 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 14:18:32,614 views 91278 6128644096 Attempting authentication for user: scothinks
+DEBUG 2024-07-28 14:18:32,614 views 91278 6128644096 Request data: {'username': 'scothinks', 'password': 's34135th'}
+INFO 2024-07-28 14:18:32,817 views 91278 6128644096 Authentication successful for user: scothinks
+INFO 2024-07-28 14:18:32,817 views 91278 6128644096 Token created: False
+DEBUG 2024-07-28 14:18:32,817 views 91278 6128644096 Response data: {'token': '21d7f5084028a1ee80551e0f2b75b0dcd4e3f6d6', 'user_id': 1, 'email': 'scot@finderverse.com', 'username': 'scothinks', 'can_update_inventory': True, 'can_report_sales': True, 'can_create_customers': True, 'can_create_tabs': True, 'can_update_tabs': True, 'can_manage_users': False}
+INFO 2024-07-28 14:18:36,094 views 91278 6128644096 Attempting authentication for user: scothinks
+DEBUG 2024-07-28 14:18:36,095 views 91278 6128644096 Request data: {'username': 'scothinks', 'password': 's34135th'}
+INFO 2024-07-28 14:18:36,295 views 91278 6128644096 Authentication successful for user: scothinks
+INFO 2024-07-28 14:18:36,295 views 91278 6128644096 Token created: False
+DEBUG 2024-07-28 14:18:36,295 views 91278 6128644096 Response data: {'token': '21d7f5084028a1ee80551e0f2b75b0dcd4e3f6d6', 'user_id': 1, 'email': 'scot@finderverse.com', 'username': 'scothinks', 'can_update_inventory': True, 'can_report_sales': True, 'can_create_customers': True, 'can_create_tabs': True, 'can_update_tabs': True, 'can_manage_users': False}
+INFO 2024-07-28 14:18:43,924 views 91278 6128644096 Attempting authentication for user: scothinks
+DEBUG 2024-07-28 14:18:43,924 views 91278 6128644096 Request data: {'username': 'scothinks', 'password': 's34135th'}
+INFO 2024-07-28 14:18:44,121 views 91278 6128644096 Authentication successful for user: scothinks
+INFO 2024-07-28 14:18:44,121 views 91278 6128644096 Token created: False
+DEBUG 2024-07-28 14:18:44,121 views 91278 6128644096 Response data: {'token': '21d7f5084028a1ee80551e0f2b75b0dcd4e3f6d6', 'user_id': 1, 'email': 'scot@finderverse.com', 'username': 'scothinks', 'can_update_inventory': True, 'can_report_sales': True, 'can_create_customers': True, 'can_create_tabs': True, 'can_update_tabs': True, 'can_manage_users': False}
+INFO 2024-07-28 14:19:12,389 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 14:19:12,390 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 14:19:30,315 views 91278 6128644096 Attempting authentication for user: scothinks
+DEBUG 2024-07-28 14:19:30,315 views 91278 6128644096 Request data: {'username': 'scothinks', 'password': 's34135th'}
+INFO 2024-07-28 14:19:30,517 views 91278 6128644096 Authentication successful for user: scothinks
+INFO 2024-07-28 14:19:30,517 views 91278 6128644096 Token created: False
+DEBUG 2024-07-28 14:19:30,517 views 91278 6128644096 Response data: {'token': '21d7f5084028a1ee80551e0f2b75b0dcd4e3f6d6', 'user_id': 1, 'email': 'scot@finderverse.com', 'username': 'scothinks', 'can_update_inventory': True, 'can_report_sales': True, 'can_create_customers': True, 'can_create_tabs': True, 'can_update_tabs': True, 'can_manage_users': False}
+INFO 2024-07-28 14:19:31,939 views 91278 6128644096 Attempting authentication for user: scothinks
+DEBUG 2024-07-28 14:19:31,939 views 91278 6128644096 Request data: {'username': 'scothinks', 'password': 's34135th'}
+INFO 2024-07-28 14:19:32,139 views 91278 6128644096 Authentication successful for user: scothinks
+INFO 2024-07-28 14:19:32,139 views 91278 6128644096 Token created: False
+DEBUG 2024-07-28 14:19:32,139 views 91278 6128644096 Response data: {'token': '21d7f5084028a1ee80551e0f2b75b0dcd4e3f6d6', 'user_id': 1, 'email': 'scot@finderverse.com', 'username': 'scothinks', 'can_update_inventory': True, 'can_report_sales': True, 'can_create_customers': True, 'can_create_tabs': True, 'can_update_tabs': True, 'can_manage_users': False}
+INFO 2024-07-28 14:19:34,036 views 91278 6128644096 Attempting authentication for user: scothinks
+DEBUG 2024-07-28 14:19:34,036 views 91278 6128644096 Request data: {'username': 'scothinks', 'password': 's34135th'}
+INFO 2024-07-28 14:19:34,238 views 91278 6128644096 Authentication successful for user: scothinks
+INFO 2024-07-28 14:19:34,238 views 91278 6128644096 Token created: False
+DEBUG 2024-07-28 14:19:34,238 views 91278 6128644096 Response data: {'token': '21d7f5084028a1ee80551e0f2b75b0dcd4e3f6d6', 'user_id': 1, 'email': 'scot@finderverse.com', 'username': 'scothinks', 'can_update_inventory': True, 'can_report_sales': True, 'can_create_customers': True, 'can_create_tabs': True, 'can_update_tabs': True, 'can_manage_users': False}
+INFO 2024-07-28 14:19:36,830 views 91278 6128644096 Attempting authentication for user: scothinks
+DEBUG 2024-07-28 14:19:36,830 views 91278 6128644096 Request data: {'username': 'scothinks', 'password': 's34135th'}
+INFO 2024-07-28 14:19:37,021 views 91278 6128644096 Authentication successful for user: scothinks
+INFO 2024-07-28 14:19:37,021 views 91278 6128644096 Token created: False
+DEBUG 2024-07-28 14:19:37,021 views 91278 6128644096 Response data: {'token': '21d7f5084028a1ee80551e0f2b75b0dcd4e3f6d6', 'user_id': 1, 'email': 'scot@finderverse.com', 'username': 'scothinks', 'can_update_inventory': True, 'can_report_sales': True, 'can_create_customers': True, 'can_create_tabs': True, 'can_update_tabs': True, 'can_manage_users': False}
+INFO 2024-07-28 14:19:50,151 views 91278 6128644096 Fetching current user data for user: scothinks
+INFO 2024-07-28 14:19:50,152 views 91278 6128644096 Successfully serialized user data for: scothinks
+INFO 2024-07-28 18:07:36,862 views 97138 6189182976 Attempting authentication for user: scothinks
+DEBUG 2024-07-28 18:07:36,864 views 97138 6189182976 Request data: {'username': 'scothinks', 'password': 's34135th'}
+INFO 2024-07-28 18:07:37,038 views 97138 6189182976 Authentication successful for user: scothinks
+INFO 2024-07-28 18:07:37,038 views 97138 6189182976 Token created: False
+DEBUG 2024-07-28 18:07:37,038 views 97138 6189182976 Response data: {'token': '21d7f5084028a1ee80551e0f2b75b0dcd4e3f6d6', 'user_id': 1, 'email': 'scot@finderverse.com', 'username': 'scothinks', 'can_update_inventory': True, 'can_report_sales': True, 'can_create_customers': True, 'can_create_tabs': True, 'can_update_tabs': True, 'can_manage_users': False}
+INFO 2024-07-28 18:07:37,079 views 97138 6189182976 Fetching current user data for user: scothinks
+INFO 2024-07-28 18:07:37,079 views 97138 6189182976 Successfully serialized user data for: scothinks
+INFO 2024-07-28 18:08:45,832 views 97138 6189182976 Fetching current user data for user: scothinks
+INFO 2024-07-28 18:08:45,834 views 97138 6189182976 Successfully serialized user data for: scothinks
+INFO 2024-07-28 18:31:51,496 views 97975 6161215488 Fetching current user data for user: scothinks
+INFO 2024-07-28 18:31:51,497 views 97975 6161215488 Successfully serialized user data for: scothinks
+INFO 2024-07-28 18:33:29,103 views 97975 6161215488 Fetching current user data for user: scothinks
+INFO 2024-07-28 18:33:29,105 views 97975 6161215488 Successfully serialized user data for: scothinks
