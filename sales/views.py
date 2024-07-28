@@ -86,6 +86,15 @@ class SaleViewSet(viewsets.ModelViewSet):
         
         try:
             serializer.is_valid(raise_exception=True)
+            customer = serializer.validated_data.get('customer')
+            
+            if customer:
+                customer_tab, created = CustomerTab.objects.get_or_create(customer=customer)
+                new_tab_amount = customer_tab.amount + serializer.validated_data['total_amount']
+                
+                if new_tab_amount > customer.tab_limit:
+                    return Response({"error": "This sale would exceed the customer's tab limit"}, status=status.HTTP_400_BAD_REQUEST)
+            
             with transaction.atomic():
                 self.perform_create(serializer)
                 headers = self.get_success_headers(serializer.data)
