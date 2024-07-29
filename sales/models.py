@@ -23,8 +23,8 @@ class Sale(models.Model):
         return f"{self.item.name} - {self.quantity} units"
 
     def save(self, *args, **kwargs):
-        # Always calculate total_amount, regardless of whether it's a new or existing sale
-        self.total_amount = self.item.cost * self.quantity
+        if not self.total_amount:
+            self.total_amount = self.item.cost * self.quantity
         super().save(*args, **kwargs)
 
 @receiver(post_save, sender=Sale)

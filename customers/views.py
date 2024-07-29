@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions, status
+from rest_framework.decorators import action
 from rest_framework.views import APIView
 from .models import Customer, CustomerTab
 from .serializers import CustomerSerializer, CustomerTabSerializer
@@ -12,14 +13,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
 
-    def get_permissions(self):
-        if self.action == 'create':
-            permission_classes = [CanCreateCustomers]
-        else:
-            permission_classes = [permissions.IsAuthenticated]
-        logger.info(f"Action: {self.action}, Permission classes: {[p.__name__ for p in permission_classes]}")
-        return [permission() for permission in permission_classes]
-    
     def create(self, request, *args, **kwargs):
         logger.info(f"Attempting to create customer with data: {request.data}")
         serializer = self.get_serializer(data=request.data)
@@ -27,13 +20,31 @@ class CustomerViewSet(viewsets.ModelViewSet):
             logger.error(f"Serializer errors: {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         try:
-            self.perform_create(serializer)
+            customer = serializer.save()
             logger.info(f"Customer created successfully: {serializer.data}")
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         except Exception as e:
             logger.exception(f"Error creating customer: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['PATCH'])
+    def update_tab_limit(self, request, pk=None):
+        customer = self.get_object()
+        new_limit = request.data.get('tab_limit')
+        if new_limit is not None:
+            customer.tab_limit = new_limit
+            customer.save()
+            return Response({"message": "Tab limit updated successfully"}, status=status.HTTP_200_OK)
+        return Response({"error": "No tab_limit provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_permissions(self):
+        if self.action == 'create':
+            permission_classes = [CanCreateCustomers]
+        else:
+            permission_classes = [permissions.IsAuthenticated]
+        logger.info(f"Action: {self.action}, Permission classes: {[p.__name__ for p in permission_classes]}")
+        return [permission() for permission in permission_classes]
 
     def list(self, request, *args, **kwargs):
         logger.info("Retrieving customer list")

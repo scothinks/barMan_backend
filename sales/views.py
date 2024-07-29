@@ -14,6 +14,7 @@ from django.utils.dateparse import parse_date
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from datetime import timedelta
+from rest_framework.exceptions import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -31,10 +32,7 @@ class SaleViewSet(viewsets.ModelViewSet):
     filterset_fields = ['payment_status', 'customer']
 
     def perform_create(self, serializer):
-        with transaction.atomic():
-            sale = serializer.save(recorded_by=self.request.user)
-            if sale.customer:
-                CustomerTab.update_tab_amount(sale.customer)
+        serializer.save(recorded_by=self.request.user)
 
     def perform_update(self, serializer):
         with transaction.atomic():
@@ -79,22 +77,48 @@ class SaleViewSet(viewsets.ModelViewSet):
             CustomerTab.update_tab_amount(customer)
         
         return Response({'status': 'sale allocated to customer'})
-    
+
     @action(detail=False, methods=['post'])
     def multiple(self, request):
         sales_data = request.data
         created_sales = []
 
-        for sale_data in sales_data:
-            serializer = self.get_serializer(data=sale_data)
-            if serializer.is_valid():
-                sale = serializer.save(recorded_by=request.user)
-                created_sales.append(self.get_serializer(sale).data)
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            with transaction.atomic():
+                for sale_data in sales_data:
+                    serializer = self.get_serializer(data=sale_data)
+                    if serializer.is_valid():
+                        # Check inventory
+                        item = serializer.validated_data['item']
+                        quantity = serializer.validated_data['quantity']
+                        if item.quantity < quantity:
+                            return Response({
+                                "error": f"Insufficient inventory for {item.name}. Available: {item.quantity}, Requested: {quantity}"
+                            }, status=status.HTTP_400_BAD_REQUEST)
+                        
+                        # Check tab limit
+                        customer = serializer.validated_data.get('customer')
+                        if customer:
+                            customer_tab, _ = CustomerTab.objects.get_or_create(customer=customer)
+                            new_tab_amount = customer_tab.amount + serializer.validated_data['total_amount']
+                            if new_tab_amount > customer.tab_limit:
+                                raise ValidationError({
+                                    "error": "Tab limit exceeded",
+                                    "customer_name": customer.name,
+                                    "customer_id": customer.id,
+                                    "current_limit": customer.tab_limit,
+                                    "required_limit": new_tab_amount
+                                })
+                        
+                        sale = serializer.save(recorded_by=request.user)
+                        created_sales.append(self.get_serializer(sale).data)
+                    else:
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError as e:
+            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(created_sales, status=status.HTTP_201_CREATED)
-    
+
     def create(self, request, *args, **kwargs):
         logger.info(f"Received sale data: {request.data}")
         serializer = self.get_serializer(data=request.data)
@@ -108,16 +132,39 @@ class SaleViewSet(viewsets.ModelViewSet):
                 new_tab_amount = customer_tab.amount + serializer.validated_data['total_amount']
                 
                 if new_tab_amount > customer.tab_limit:
-                    return Response({"error": "This sale would exceed the customer's tab limit"}, status=status.HTTP_400_BAD_REQUEST)
+                    raise ValidationError({
+                        "error": "This sale would exceed the customer's tab limit",
+                        "current_limit": customer.tab_limit,
+                        "required_limit": new_tab_amount,
+                        "customer_id": customer.id
+                    })
             
             with transaction.atomic():
                 self.perform_create(serializer)
                 headers = self.get_success_headers(serializer.data)
                 logger.info(f"Sale created successfully: {serializer.data}")
                 return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except ValidationError as e:
+            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logger.error(f"Error creating sale: {str(e)}")
             return Response({'error': 'Failed to create sale'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['POST'])
+    def update_tab_limit(self, request):
+        customer_id = request.data.get('customer_id')
+        new_limit = request.data.get('new_limit')
+        
+        try:
+            customer = Customer.objects.get(id=customer_id)
+            customer.tab_limit = new_limit
+            customer.save()
+            return Response({"message": "Tab limit updated successfully"}, status=status.HTTP_200_OK)
+        except Customer.DoesNotExist:
+            return Response({"error": "Customer not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error updating tab limit: {str(e)}")
+            return Response({"error": "Failed to update tab limit"}, status=status.HTTP_400_BAD_REQUEST)
 
     def list(self, request, *args, **kwargs):
         logger.info("Fetching sales list")
@@ -170,15 +217,20 @@ class SaleViewSet(viewsets.ModelViewSet):
         logger.info("Performing sales search")
         queryset = self.get_queryset()
         
-        customer_name = request.query_params.get('customer')
+        search_term = request.query_params.get('customer', '')
+        admin_term = request.query_params.get('admin', '')
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         period = request.query_params.get('period')
 
-        logger.info(f"Filters received: customer={customer_name}, start_date={start_date}, end_date={end_date}, period={period}")
+        logger.info(f"Filters received: search_term={search_term}, admin_term={admin_term}, start_date={start_date}, end_date={end_date}, period={period}")
 
-        if customer_name:
-            queryset = queryset.filter(Q(customer__name__icontains=customer_name) | Q(item__name__icontains=customer_name))
+        if search_term or admin_term:
+            queryset = queryset.filter(
+                Q(customer__name__icontains=search_term) | 
+                Q(item__name__icontains=search_term) |
+                Q(recorded_by__username__icontains=admin_term)
+            )
 
         if period:
             end_date = timezone.now()
@@ -229,3 +281,15 @@ class SaleViewSet(viewsets.ModelViewSet):
 
         logger.info(f"Returning search results: {result.data}")
         return result
+
+    @action(detail=True, methods=['patch'])
+    def update_customer(self, request, pk=None):
+        sale = self.get_object()
+        customer_id = request.data.get('customer')
+        try:
+            customer = Customer.objects.get(id=customer_id)
+            sale.customer = customer
+            sale.save()
+            return Response({'status': 'customer updated'})
+        except Customer.DoesNotExist:
+            return Response({'error': 'Customer not found'}, status=status.HTTP_404_NOT_FOUND)
