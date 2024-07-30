@@ -34,8 +34,8 @@ class UserViewSet(viewsets.ModelViewSet):
             logger.error(f"Error in me action for user {request.user.username}: {str(e)}", exc_info=True)
             return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=True, methods=['post'])
-    def set_permissions(self, request, pk=None):
+    @action(detail=True, methods=['patch'])
+    def update_permissions(self, request, pk=None):
         try:
             user = self.get_object()
             serializer = UserSerializer(user, data=request.data, partial=True)
@@ -46,8 +46,23 @@ class UserViewSet(viewsets.ModelViewSet):
             logger.warning(f"Invalid data for updating permissions: {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.error(f"Error in set_permissions action: {str(e)}", exc_info=True)
+            logger.error(f"Error in update_permissions action: {str(e)}", exc_info=True)
             return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            instance._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
+
+    def perform_update(self, serializer):
+        serializer.save()
 
 class CurrentUserView(APIView):
     permission_classes = [IsAuthenticated]
