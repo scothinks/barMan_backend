@@ -2,6 +2,9 @@ from decimal import Decimal
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.utils import timezone
+import logging
+
+logger = logging.getLogger(__name__)
 
 class InventoryItem(models.Model):
     name = models.CharField(max_length=100)
@@ -27,6 +30,8 @@ class InventoryItem(models.Model):
         self.save()
 
     def restore(self):
+        logger.info(f"Restoring item {self.id} - {self.name}")
         self.is_deleted = False
         self.delete_requested_at = None
         self.save()
+        logger.info(f"Item {self.id} - {self.name} restored successfully")

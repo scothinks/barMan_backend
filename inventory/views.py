@@ -15,6 +15,8 @@ from django.views.decorators.cache import cache_page
 from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
 from django.utils import timezone
 from datetime import timedelta
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,7 @@ class StandardResultsSetPagination(PageNumberPagination):
 class InventoryItemViewSet(viewsets.ModelViewSet):
     throttle_classes = [UserRateThrottle]
     throttle_scope = 'inventory'
-    queryset = InventoryItem.objects.filter(is_deleted=False).order_by('id')
+    queryset = InventoryItem.objects.all().order_by('id')
     serializer_class = InventoryItemSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
@@ -139,24 +141,53 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def restore(self, request, pk=None):
+        logger.info(f"Restore method called for item {pk}")
         try:
             item = self.get_object()
+            logger.info(f"Attempting to restore item: {item.id} - {item.name}")
+
             if item.is_deleted:
                 item.restore()
-                logger.info(f"Restored inventory item: {item.name}")
-                return Response({"status": "Item restored"}, status=status.HTTP_200_OK)
-            logger.info(f"Attempted to restore non-deleted item: {item.name}")
-            return Response({"error": "Item not deleted"}, status=status.HTTP_400_BAD_REQUEST)
+                logger.info(f"Successfully restored inventory item: {item.name}")
+                serializer = self.get_serializer(item)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                logger.warning(f"Attempted to restore non-deleted item: {item.name}")
+                return Response({"error": "Item is not deleted"}, status=status.HTTP_400_BAD_REQUEST)
+        except Http404:
+            logger.error(f"Item with id {pk} not found")
+            return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             logger.error(f"Error in restore method: {str(e)}", exc_info=True)
-            return Response({"error": "An unexpected error occurred"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = InventoryItem.objects.all()
         include_deleted = self.request.query_params.get('include_deleted', 'false').lower() == 'true'
-        if include_deleted:
-            queryset = InventoryItem.objects.all()
-        return queryset
+
+        if self.action == 'restore':
+            include_deleted = True
+
+        if not include_deleted:
+            queryset = queryset.filter(is_deleted=False)
+
+        logger.info(f"get_queryset called. include_deleted: {include_deleted}. Action: {self.action}. Query: {queryset.query}")
+        return queryset.order_by('id')
+
+    def get_object(self):
+        queryset = self.get_queryset()
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        assert lookup_url_kwarg in self.kwargs, (
+            'Expected view %s to be called with a URL keyword argument '
+            'named "%s". Fix your URL conf, or set the `.lookup_field` '
+            'attribute on the view correctly.' %
+            (self.__class__.__name__, lookup_url_kwarg)
+        )
+        filter_kwargs = {self.lookup_field: self.kwargs[lookup_url_kwarg]}
+        obj = get_object_or_404(queryset, **filter_kwargs)
+        self.check_object_permissions(self.request, obj)
+        logger.info(f"get_object called. Retrieved item: {obj.id} - {obj.name}")
+        return obj
 
     def handle_exception(self, exc):
         if isinstance(exc, AuthenticationFailed):
@@ -169,13 +200,13 @@ class InventoryItemViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         logger.info(f"Listing inventory items for user: {request.user}")
-        
+
         # Log large payloads
         if len(request.body) > 1000:
             logger.warning(f"Large payload detected: {len(request.body)} bytes")
 
         return super().list(request, *args, **kwargs)
-    
+
     @action(detail=True, methods=['post'])
     def soft_delete(self, request, pk=None):
         try:
