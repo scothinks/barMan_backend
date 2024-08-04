@@ -1,264 +1,180 @@
-import os
-from pathlib import Path
-import logging
+// src/contexts/__tests__/InventoryContext.test.js
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+import React from 'react';
+import { renderHook, act } from '@testing-library/react-native';
+import { InventoryProvider, useInventory } from '../InventoryContext';
+import * as api from '../../services/api';
 
-# Use environment variable for SECRET_KEY in production
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-v-as636%&9+kx4_68!h4wh-2s4-doy4zfvrq@(^+qs&zl!jy0g')
+// Mock the API functions
+jest.mock('../../services/api', () => ({
+  getInventoryItems: jest.fn(),
+  createInventoryItem: jest.fn(),
+  updateInventoryItem: jest.fn(),
+  deleteInventoryItem: jest.fn(),
+  confirmDeleteInventoryItem: jest.fn(),
+  restoreInventoryItem: jest.fn(),
+}));
 
-# Use environment variable for DEBUG in production
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+// Mock the AuthContext
+jest.mock('../AuthContext', () => ({
+  useAuth: () => ({
+    logout: jest.fn(),
+    isAuthenticated: jest.fn(() => true),
+  }),
+}));
 
+describe('InventoryContext', () => {
+  const wrapper = ({ children }) => <InventoryProvider>{children}</InventoryProvider>;
 
-# Use environment variable for ALLOWED_HOSTS in production
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
-INTERNAL_IPS = [
-    '127.0.0.1',
-]
+  it('provides initial inventory state', () => {
+    const { result } = renderHook(() => useInventory(), { wrapper });
 
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django_filters',
-    'rest_framework',
-    'customers',
-    'inventory.apps.InventoryConfig',
-    'rest_framework.authtoken',  
-    'corsheaders',  
-    'sales',
-    'users',
-    'debug_toolbar',
-]
+    expect(result.current.inventoryItems).toEqual([]);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
 
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'barMan_backend.middleware.LargeHeadersLoggingMiddleware',
-]
+  it('fetches inventory items', async () => {
+    const mockItems = [
+      { id: 1, name: 'Item 1', cost: '10.50', is_deleted: false },
+      { id: 2, name: 'Item 2', cost: 20, is_deleted: 'false' },
+    ];
+    api.getInventoryItems.mockResolvedValueOnce(mockItems);
 
+    const { result } = renderHook(() => useInventory(), { wrapper });
 
-ROOT_URLCONF = 'barMan_backend.urls'
+    await act(async () => {
+      result.current.fetchInventoryItems();
+      // Add a small delay to allow for state updates
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
+    expect(result.current.inventoryItems).toEqual([
+      { id: 1, name: 'Item 1', cost: 10.50, is_deleted: false },
+      { id: 2, name: 'Item 2', cost: 20, is_deleted: false },
+    ]);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
 
-WSGI_APPLICATION = 'barMan_backend.wsgi.application'
+  it('adds an inventory item', async () => {
+    const newItem = { name: 'New Item', cost: '30.00' };
+    const addedItem = { id: 3, ...newItem, cost: 30 };
+    api.createInventoryItem.mockResolvedValueOnce(addedItem);
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        'CONN_MAX_AGE': 0,
-}
-}
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
+    const { result } = renderHook(() => useInventory(), { wrapper });
 
-LANGUAGE_CODE = 'en-us'
+    await act(async () => {
+      await result.current.addInventoryItem(newItem);
+    });
 
-TIME_ZONE = 'UTC'
+    expect(result.current.inventoryItems).toContainEqual(addedItem);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
 
-USE_I18N = True
+  it('updates an inventory item', async () => {
+    const updatedItem = { id: 1, name: 'Updated Item', cost: 40 };
+    api.updateInventoryItem.mockResolvedValueOnce(updatedItem);
 
-USE_TZ = True
+    const { result } = renderHook(() => useInventory(), { wrapper });
 
-STATIC_URL = 'static/'
+    await act(async () => {
+      await result.current.updateInventoryItem(1, updatedItem);
+    });
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+    expect(result.current.inventoryItems).toContainEqual(updatedItem);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
 
-# REST Framework configuration
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-    ],
-    'DEFAULT_PARSER_CLASSES': [
-        'rest_framework.parsers.JSONParser',
-        'rest_framework.parsers.MultiPartParser',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'rest_framework.throttling.UserRateThrottle'
-    ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/minute',
-        'user': '1000/minute'
-    },
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
-    'MAX_UPLOAD_SIZE': 5242880,  # 5 MB
-}
+  it('deletes an inventory item', async () => {
+    api.deleteInventoryItem.mockResolvedValueOnce({});
 
-# Custom user model
-AUTH_USER_MODEL = 'users.CustomUser'
+    const { result } = renderHook(() => useInventory(), { wrapper });
 
-# CORS settings
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = "http://localhost:3000",
-CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only in debug mode
+    // Add an item to delete
+    result.current.inventoryItems = [{ id: 1, name: 'Item to delete', is_deleted: false }];
 
-CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
-]
+    await act(async () => {
+      await result.current.deleteInventoryItem(1);
+    });
 
-CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
-]
+    expect(result.current.inventoryItems[0].is_deleted).toBe(true);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
 
-# CSRF settings
-CSRF_COOKIE_NAME = "csrftoken"
-CSRF_HEADER_NAME = "X-CSRFToken"
-CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript access
-CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_USE_SESSIONS = False
-CSRF_COOKIE_SECURE = not DEBUG
+  it('confirms deletion of an inventory item', async () => {
+    api.confirmDeleteInventoryItem.mockResolvedValueOnce({});
 
-# Session settings
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-SESSION_COOKIE_AGE = 1209600  # 2 weeks, in seconds
-SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = not DEBUG  # Use secure cookie in production
-SESSION_SAVE_EVERY_REQUEST = True
+    const { result } = renderHook(() => useInventory(), { wrapper });
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
-        },
-    },
-    'filters': {
-        'duplicate_filter': {
-            '()': 'barMan_backend.log_filters.DuplicateFilter',
-        },
-        'require_debug_true': {
-            '()': 'django.utils.log.RequireDebugTrue',
-        },
-    },
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-            'filters': ['duplicate_filter', 'require_debug_true'],
-        },
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': 'django.log',
-            'formatter': 'verbose',
-            'filters': ['duplicate_filter'],
-        },
-        'auth_file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': 'auth.log',
-            'formatter': 'verbose',
-        },
-    },
-    'root': {
-        'handlers': ['console', 'file'],
-        'level': 'INFO',
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'django.db.backends': {
-            'level': 'INFO',
-            'handlers': ['console'],
-            'propagate': False,
-        },
-        'django.request': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'rest_framework': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'users': {  # Add this logger for your users app
-            'handlers': ['console', 'auth_file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'barMan_backend': {  # Add this logger for your main app
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-    },
-}
+    // Add an item to confirm delete
+    result.current.inventoryItems = [{ id: 1, name: 'Item to confirm delete' }];
 
-# Increase the maximum size of the entire request body
-DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
+    await act(async () => {
+      await result.current.confirmDeleteInventoryItem(1);
+    });
 
-# Increase the maximum number of fields allowed in a request
-DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
+    expect(result.current.inventoryItems).toEqual([]);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
 
-# Increase the maximum allowed size for an individual field
-FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
+  it('restores a deleted inventory item', async () => {
+    const restoredItem = { id: 1, name: 'Restored Item', cost: 50, is_deleted: false };
+    api.restoreInventoryItem.mockResolvedValueOnce(restoredItem);
+
+    const { result } = renderHook(() => useInventory(), { wrapper });
+
+    // Add a deleted item to restore
+    result.current.inventoryItems = [{ id: 1, name: 'Deleted Item', is_deleted: true }];
+
+    await act(async () => {
+      await result.current.restoreInventoryItem(1);
+    });
+
+    expect(result.current.inventoryItems).toContainEqual(restoredItem);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('handles errors when fetching inventory items', async () => {
+    api.getInventoryItems.mockRejectedValueOnce(new Error('Fetch error'));
+
+    const { result } = renderHook(() => useInventory(), { wrapper });
+
+    await act(async () => {
+      result.current.fetchInventoryItems();
+      // Add a small delay to allow for state updates
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    expect(result.current.error).toBe('Failed to fetch inventory items. Please try again.');
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('refreshes inventory', async () => {
+    const mockItems = [{ id: 1, name: 'Refreshed Item', cost: '60.00', is_deleted: false }];
+    api.getInventoryItems.mockResolvedValueOnce(mockItems);
+
+    const { result } = renderHook(() => useInventory(), { wrapper });
+
+    await act(async () => {
+      result.current.refreshInventory();
+      // Add a small delay to allow for state updates
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    expect(result.current.inventoryItems).toEqual([
+      { id: 1, name: 'Refreshed Item', cost: 60, is_deleted: false },
+    ]);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
+});

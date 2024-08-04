@@ -96,11 +96,14 @@ class SaleViewSet(viewsets.ModelViewSet):
                                 "error": f"Insufficient inventory for {item.name}. Available: {item.quantity}, Requested: {quantity}"
                             }, status=status.HTTP_400_BAD_REQUEST)
                         
+                        # Calculate total_amount
+                        total_amount = item.cost * quantity
+
                         # Check tab limit
                         customer = serializer.validated_data.get('customer')
                         if customer:
                             customer_tab, _ = CustomerTab.objects.get_or_create(customer=customer)
-                            new_tab_amount = customer_tab.amount + serializer.validated_data['total_amount']
+                            new_tab_amount = customer_tab.amount + total_amount
                             if new_tab_amount > customer.tab_limit:
                                 raise ValidationError({
                                     "error": "Tab limit exceeded",
@@ -110,14 +113,13 @@ class SaleViewSet(viewsets.ModelViewSet):
                                     "required_limit": new_tab_amount
                                 })
                         
-                        sale = serializer.save(recorded_by=request.user)
+                        sale = serializer.save(recorded_by=request.user, total_amount=total_amount)
                         created_sales.append(self.get_serializer(sale).data)
                     else:
                         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(created_sales, status=status.HTTP_201_CREATED)
         except ValidationError as e:
             return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(created_sales, status=status.HTTP_201_CREATED)
 
     def create(self, request, *args, **kwargs):
         logger.info(f"Received sale data: {request.data}")

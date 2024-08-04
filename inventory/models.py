@@ -25,9 +25,11 @@ class InventoryItem(models.Model):
         return self.name
 
     def soft_delete(self):
+        logger.info(f"Soft deleting item {self.id} - {self.name}")
         self.is_deleted = True
         self.delete_requested_at = timezone.now()
         self.save()
+        logger.info(f"Item {self.id} - {self.name} soft deleted successfully")
 
     def restore(self):
         logger.info(f"Restoring item {self.id} - {self.name}")
